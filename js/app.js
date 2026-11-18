@@ -171,7 +171,7 @@
         <span class="muted small">${avg.months.length ? `Comparado con la media de ${avg.months.length} ${avg.months.length === 1 ? 'mes completo anterior' : 'meses completos anteriores'}` : 'Aún no hay meses completos anteriores para comparar'}</span>
       </div>
       ${partial ? '<div class="warn">ℹ️ Este mes está incompleto: los extractos importados no lo cubren entero. Sus cifras no se usan en medias ni comparativas.</div>' : ''}
-      ${warns.map((w) => `<div class="warn">💳 <b>${esc(w.card.name)}</b>: hay ${w.count} pagos en ING (${eur(w.amount, 2)}) desde el ${fmtDate(w.since)}, pero el último movimiento importado de la tarjeta es ${w.last ? 'del ' + fmtDate(w.last) : '— ninguno —'}. <a href="#importar">Importa su extracto</a> para ver en qué se gastó.</div>`).join('')}
+      ${warns.map((w) => `<div class="warn">💳 <b>${esc(w.card.name)}</b>: ${w.count} cargos en ING (${eur(w.amount, 2)}) desde el ${fmtDate(w.since)} cuentan como <b>gasto provisional</b>, porque el extracto de la tarjeta solo llega hasta ${w.last ? 'el ' + fmtDate(w.last) : '— ninguno —'}. ${w.card.source === 'carrefour' ? 'Cuando se cierre el ciclo (a partir del día 21) descarga el extracto e <a href="#importar">impórtalo</a>: los cargos se sustituirán por las compras una a una.' : '<a href="#importar">Importa su extracto</a> para verlos en detalle.'}</div>`).join('')}
       <div class="grid kpis">
         <div class="card kpi"><div class="label">💼 Ingresos</div><div class="value">${eur(s.ingresos)}</div><div class="sub">${prev.ingresos ? `Mes anterior: ${eur(prev.ingresos)}` : '&nbsp;'}</div></div>
         <div class="card kpi"><div class="label">🧾 Gastos</div><div class="value">${eur(s.gastos)}</div>
@@ -265,6 +265,7 @@
     const linked = t.linked_to ? S.txs.find((x) => x.id === t.linked_to) : null;
     const eff = C.effectOf(t, ctx);
     const effChip = eff === 'excluido' ? '<span class="chip" data-tip="No cuenta como gasto ni ingreso">no computa</span>'
+      : C.isProvisional(t, ctx) ? '<span class="chip sug" data-tip="Cuenta como gasto hasta que importes el extracto de la tarjeta; entonces se sustituye por las compras">provisional</span>'
       : (c && c.kind === 'pago_tarjeta' && eff === 'gasto') ? '<span class="chip" data-tip="Tarjeta en modo sin detalle: cuenta como gasto">sin detalle</span>' : '';
     const sug = t.needs_review && t.categorized_by === 'banco' ? '<span class="chip sug" data-tip="Categoría sugerida por ING: confírmala o cámbiala">sugerida</span>' : '';
     return `<div class="tx" data-id="${t.id}">
@@ -434,7 +435,7 @@
       <div class="card" style="margin-top:16px"><h3>Cómo descargar cada extracto</h3>
         <ul class="small" style="margin:0;padding-left:18px;line-height:1.8">
           <li><b>ING</b>: web → cuenta → Movimientos → elegir fechas → descargar Excel. Máximo 500 movimientos por descarga: si necesitas más, descarga varios tramos (los repetidos se ignoran).</li>
-          <li><b>Carrefour Pass</b>: web de Pass → Movimientos → «Movimientos de contado y crédito» → periodo (cada ciclo va del 21 al 20) → Excel.</li>
+          <li><b>Carrefour Pass</b>: web de Pass → Movimientos → «Movimientos de contado y crédito» → ciclo (del 21 al 20) → Excel. Solo se puede descargar cuando el ciclo está cerrado, así que se importa <b>una vez al mes, a partir del día 21</b>. Mientras tanto, sus cargos en ING cuentan como gasto provisional.</li>
           <li><b>Revolut</b>: app → Cuenta → Extracto → Excel/CSV → periodo.</li>
           <li>Sube sin miedo periodos que se solapan: la app detecta y salta los movimientos que ya tiene.</li></ul></div>`;
     const drop = $('#drop'); const inp = $('#file');

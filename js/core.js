@@ -237,17 +237,32 @@
     if (!c) return 'pendiente';
     if (c.kind === 'pago_tarjeta') {
       const card = ctx.accById.get(tx.card_account_id);
-      return card && card.detail_mode ? 'excluido' : 'gasto';
+      if (!card || !card.detail_mode) return 'gasto';
+      // Con detalle: el cargo solo se excluye si el extracto de la tarjeta ya cubre esa fecha.
+      // Si aún no se ha importado (p. ej. el ciclo de Carrefour no se ha cerrado), cuenta como gasto provisional.
+      return isProvisional(tx, ctx) ? 'gasto' : 'excluido';
     }
     if (c.kind === 'traspaso' || c.kind === 'financiacion') return 'excluido';
     return c.kind;
   }
   function makeCtx(categories, accounts, txs) {
+    const cardLast = new Map(); // tarjeta -> fecha del último movimiento importado de su extracto
+    for (const t of txs || []) if (!cardLast.has(t.account_id) || t.date > cardLast.get(t.account_id)) cardLast.set(t.account_id, t.date);
     return {
       catById: new Map(categories.map((c) => [c.id, c])),
       accById: new Map(accounts.map((a) => [a.id, a])),
       txById: new Map((txs || []).map((t) => [t.id, t])),
+      cardLast,
     };
+  }
+  // ¿Es un cargo de tarjeta "con detalle" cuyo extracto aún no se ha importado?
+  function isProvisional(tx, ctx) {
+    const c = ctx.catById.get(tx.category_id);
+    if (!c || c.kind !== 'pago_tarjeta') return false;
+    const card = ctx.accById.get(tx.card_account_id);
+    if (!card || !card.detail_mode) return false;
+    const last = ctx.cardLast.get(card.id);
+    return !last || tx.date > last;
   }
   // Categoría efectiva (los reembolsos toman la del gasto original)
   function effCategory(tx, ctx) {
@@ -347,7 +362,7 @@
   const api = {
     norm, toISODate, toNumber, parseCSV, merchantOf, suggestPattern,
     parseStatement, parseGeneric, addDedupeKeys, sortRules, ruleMatches, classify,
-    effectOf, effCategory, makeCtx, monthOf, addMonths, monthSummary, normalizedByMonth, averages, firstFullMonth,
+    effectOf, effCategory, makeCtx, isProvisional, monthOf, addMonths, monthSummary, normalizedByMonth, averages, firstFullMonth,
     cardWarnings, reimbursementCandidates, round2,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Core = api;
