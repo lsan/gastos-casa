@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gastos Casa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💶</text></svg>">
+<link rel="stylesheet" href="css/estilos.css">
+<!-- Librerías -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <!-- Pantalla de acceso -->
+  <section id="login" class="login hidden">
+    <form id="login-form" class="login-card">
+      <div class="logo">💶</div>
+      <h1>Gastos Casa</h1>
+      <p class="muted">Entra con tu correo y contraseña</p>
+      <label>Correo<input type="email" id="login-email" autocomplete="username" required></label>
+      <label>Contraseña<input type="password" id="login-pass" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Entrar</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </section>
+
+  <!-- Aplicación -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="brand">💶 <span>Gastos Casa</span></div>
+      <nav id="nav">
+        <a href="#panel" data-view="panel">📊 <span>Panel</span></a>
+        <a href="#evolucion" data-view="evolucion">📈 <span>Evolución</span></a>
+        <a href="#movimientos" data-view="movimientos">📋 <span>Movimientos</span></a>
+        <a href="#pendientes" data-view="pendientes">📥 <span>Pendientes</span> <b id="badge-pend" class="badge hidden"></b></a>
+        <a href="#importar" data-view="importar">⬆️ <span>Importar</span></a>
+        <a href="#ajustes" data-view="ajustes">⚙️ <span>Ajustes</span></a>
+      </nav>
+      <div class="user"><span id="user-name"></span> <button id="logout" class="btn ghost small" title="Salir">Salir</button></div>
+    </header>
+    <main id="view"></main>
+  </div>
+
+  <div id="loading" class="loading">Cargando…</div>
+  <div id="modal-root"></div>
+  <div id="tooltip" class="tooltip hidden"></div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/graficas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
